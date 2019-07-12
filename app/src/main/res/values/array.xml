@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string-array name="bandWidth">
+        <item>0</item>
+        <item>2000</item>
+        <item>4000</item>
+        <item>6000</item>
+        <item>8000</item>
+        <item>10000</item>
+        <item>12000</item>
+        <item>14000</item>
+        <item>16000</item>
+        <item>18000</item>
+        <item>20000</item>
+    </string-array>
+
+    <string-array name="duration">
+        <item>0.01</item>
+        <item>0.02</item>
+        <item>0.03</item>
+        <item>0.04</item>
+        <item>0.05</item>
+        <item>0.06</item>
+        <item>0.07</item>
+        <item>0.08</item>
+        <item>0.09</item>
+        <item>0.10</item>
+    </string-array>
+</resources>

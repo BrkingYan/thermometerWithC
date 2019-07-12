@@ -1,0 +1,79 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical">
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="实验参数设置"
+        android:textStyle="italic"
+        android:textSize="30dp"/>
+    <LinearLayout
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:layout_marginTop="30dp">
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="fre start: "
+            android:textStyle="bold"
+            android:textSize="25dp"/>
+        <Spinner
+            android:layout_width="200dp"
+            android:layout_height="40dp"
+            android:id="@+id/spinner_band"
+            android:entries="@array/bandWidth"
+            android:textAlignment="center"
+            android:background="@drawable/boder"/>
+    </LinearLayout>
+    <LinearLayout
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:layout_marginTop="10dp">
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="duration: "
+            android:textStyle="bold"
+            android:textSize="25dp"/>
+        <Spinner
+            android:layout_width="200dp"
+            android:layout_height="40dp"
+            android:id="@+id/spinner_duration"
+            android:entries="@array/duration"
+            android:textAlignment="center"
+            android:background="@drawable/boder"/>
+    </LinearLayout>
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:layout_marginTop="10dp">
+
+        <EditText
+            android:id="@+id/micDistance_input"
+            android:hint="default value = 0.138"
+            android:layout_width="200dp"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="10dp"
+            android:ems="8"/>
+        <Button
+            android:id="@+id/button_set_distance"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Set Mic Distance"/>
+    </LinearLayout>
+    <Button
+        android:id="@+id/solution_mixfre"
+        android:text="@string/solution_mixfre"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:textSize="25dp"
+        android:layout_margin="20dp"
+        android:layout_gravity="center"/>
+</LinearLayout>

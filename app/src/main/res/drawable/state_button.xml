@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<selector xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <item android:state_activated="false"
+        android:drawable="@drawable/color_green">
+    </item> <!-- 未点击时的颜色 -->
+
+    <item android:state_activated="true"
+        android:drawable="@drawable/color_red">
+    </item> <!-- 点击后的颜色 -->
+
+</selector>
