@@ -23,6 +23,7 @@ public class ParamConfigActivity extends AppCompatActivity implements View.OnCli
 
     private Button micConfigButton;
     private Button beginMeasureBtn;
+    private Button trainingBtn;
 
     private Spinner bandSpinner;
     private Spinner durationSpinner;
@@ -73,7 +74,8 @@ public class ParamConfigActivity extends AppCompatActivity implements View.OnCli
         micConfigButton.setOnClickListener(this);
         beginMeasureBtn = findViewById(R.id.solution_mixfre);
         beginMeasureBtn.setOnClickListener(this);
-
+        trainingBtn = findViewById(R.id.training_btn);
+        trainingBtn.setOnClickListener(this);
     }
 
     private void loadSpinnerData(){
@@ -126,6 +128,18 @@ public class ParamConfigActivity extends AppCompatActivity implements View.OnCli
                     intent.putExtra(micKey,Double.parseDouble(configedMicDistance));
                 }
                 startActivity(intent);
+                finish();
+                break;
+            case R.id.training_btn:
+                Intent intent1 = new Intent(ParamConfigActivity.this,TrainingActivity.class);
+                intent1.putExtra(bandKey,selectedFreStart);
+                intent1.putExtra(durationKey,selectedDuration);
+                if (configedMicDistance==null || configedMicDistance.equals("")){
+                    intent1.putExtra(micKey,0.138);
+                }else {
+                    intent1.putExtra(micKey,Double.parseDouble(configedMicDistance));
+                }
+                startActivity(intent1);
                 finish();
                 break;
         }

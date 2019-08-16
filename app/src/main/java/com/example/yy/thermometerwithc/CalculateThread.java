@@ -4,6 +4,8 @@ import android.os.Handler;
 import android.os.Message;
 import android.util.Log;
 
+import com.example.yy.thermometerwithc.Activity.MeasureActivity;
+
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.LinkedList;
@@ -18,13 +20,15 @@ public class CalculateThread extends Thread implements BorderVar,AudioRecorder.R
     private Spectrum mSpectrum;
     private short[] leftChannelAudioData;
     private short[] rightChannelAudioData;
+    private double[] leftNormalizedData;
+    private double[] rightNormalizedData;
     private double Duration;
     private double Band;
     private double MicDistance = 0.138;
     private double C = 331.3;
     private double[] Chirp;
-    private double[] leftSegment;
-    private double[] rightSegment;
+    private double[] leftSegment;//new double[Chirp.length];
+    private double[] rightSegment;//new double[Chirp.length];
     private double[] fpData;
     private int fp;
     private int temperature;
@@ -38,12 +42,15 @@ public class CalculateThread extends Thread implements BorderVar,AudioRecorder.R
 
     double[] mixSignalFFT;
 
-    private static final int TIME_TO_UPDATE_UI = 1;
+    private static final int TIME_TO_UPDATE_TEST_UI = 1;
+    private static final int TIME_TO_UPDATE_TRAINING_UI = 3;
 
     private Handler mHandler;
 
     private GraphDataCallBack mGraphDataCallBack;
     private AudioRecorder.RecordingCallback mRecordingCallback;
+
+    private TrainingGraphDataCallBack mTrainingGraphDataCallBack;
 
     private List<Integer> fList;
 
@@ -63,14 +70,17 @@ public class CalculateThread extends Thread implements BorderVar,AudioRecorder.R
         mSpectrum = new Spectrum(N, Fs);
         leftChannelAudioData = new short[4096];//一次性收集的左声道的数据为4096个
         rightChannelAudioData = new short[4096];//一次性收集的右声道的数据为4096个
+        leftNormalizedData = new double[4096];
+        rightNormalizedData = new double[4096];
         Chirp = ChirpSignal.upChirp(Fs, (int) (endFrequnce - this.Band), this.Duration);
         leftSegment = new double[Chirp.length];
         rightSegment = new double[Chirp.length];
         fpData = new double[200];
-        calData = new short[FillCount*byteLength];
+        calData = new short[FillCount*byteLength];//4096个数据
         this.mHandler = handler;
 
         fList = new ArrayList<>();
+
     }
 
     @Override
@@ -79,18 +89,26 @@ public class CalculateThread extends Thread implements BorderVar,AudioRecorder.R
             if(isBufferFilled == false){
                 //fillData()之后
                 if (isDataReady) {
-                    //mGraphDataCallBack.onGraphDataReady(graphData(),fpGraphData());
                     //文件下载完成后更新UI
                     Message msg = Message.obtain(mHandler);
-                    msg.what = TIME_TO_UPDATE_UI;
-                    msg.obj = estimate_temperatureJni();
+
+
+                    if (mGraphDataCallBack != null){
+                        //测温activity
+                        msg.what = TIME_TO_UPDATE_TEST_UI;
+                        mGraphDataCallBack.onGraphDataReady(graphData(),fpGraphData());
+                    }else {
+                        //训练activity
+                        msg.what = TIME_TO_UPDATE_TRAINING_UI;
+                        msg.obj = estimate_temperatureJni();
+                        mTrainingGraphDataCallBack.onTrainingGraphDataReady(spectData(),timeSpecData());
+                    }
                     mHandler.sendMessage(msg);
                     synchronized (this) {
                         isDataReady = false;
                     }
                 }
             }
-
         }
     }
 
@@ -99,7 +117,9 @@ public class CalculateThread extends Thread implements BorderVar,AudioRecorder.R
      * */
     @Override
     public void onDataReady(short[] data, int bytelen) {
+        //每次录到的是8192个数据
         if(!isBufferFilled){
+            Log.e(TAG,"byteLen!!!" + bytelen);
             System.arraycopy(data, 0, calData, curIdx * bytelen, bytelen);
             curIdx++;
             if(curIdx >= FillCount){
@@ -115,6 +135,7 @@ public class CalculateThread extends Thread implements BorderVar,AudioRecorder.R
     /*
      * 读取buffer的音频数据，并将左右信道的信号分开
      * 输出到leftChannelAudioData，rightChannelAudioData中
+     *  x是录到得音频，大小为8192
      * */
     public void fillData(short[] x) {
         for (int i = 0; i < x.length / 2; i = i + 2) {
@@ -130,9 +151,12 @@ public class CalculateThread extends Thread implements BorderVar,AudioRecorder.R
 
 
     public double estimate_temperature() {
+        //归一化
+        leftNormalizedData = Algorithm.normolizeArrayJni(leftChannelAudioData);
+        rightNormalizedData = Algorithm.normolizeArrayJni(rightChannelAudioData);
+
         //对信号进行滤波
         Highpass a = new Highpass();
-
         double[] leftFilterData = a.FIRFilter2KStopBand(leftChannelAudioData);
         double[] rightFilterData = a.FIRFilter2KStopBand(rightChannelAudioData);
 
@@ -162,15 +186,18 @@ public class CalculateThread extends Thread implements BorderVar,AudioRecorder.R
     }
 
     public double estimate_temperatureJni() {
-        //对信号进行滤波
-        Highpass a = new Highpass();
-//        double[] leftFilterData = a.FIRFilter(leftChannelAudioData);
-//        double[] rightFilterData = a.FIRFilter(rightChannelAudioData);
-        Log.d(TAG,"leftChannelData:" + leftChannelAudioData[200]);
-        double[] leftFilterData = a.FIRFilter2KStopBandWithJni(leftChannelAudioData);
-        double[] rightFilterData = a.FIRFilter2KStopBandWithJni(rightChannelAudioData);
+        //归一化
+        leftNormalizedData = Algorithm.normolizeArrayJni(leftChannelAudioData);
+        rightNormalizedData = Algorithm.normolizeArrayJni(rightChannelAudioData);
 
-        Log.d(TAG,"leftData:" + leftFilterData[200]);
+        //对信号进行滤波
+        /*Highpass a = new Highpass();
+        double[] leftFilterData = a.FIRFilter2KStopBandWithJni(leftChannelAudioData);
+        double[] rightFilterData = a.FIRFilter2KStopBandWithJni(rightChannelAudioData);*/
+
+        double[] leftFilterData = leftNormalizedData;//4096
+        double[] rightFilterData = rightNormalizedData;//4096
+
         //对信号进行同步，选取chirp长度的左右声道信号。
         synchronizeSignalWithJni(leftFilterData, rightFilterData);
         //Log.e(TAG,"run here");
@@ -180,16 +207,17 @@ public class CalculateThread extends Thread implements BorderVar,AudioRecorder.R
         mixSignalFFT = Algorithm.fftJni(mixSignal);//对混合的信号做傅里叶变换
         //Log.d(TAG,"mixSignalFFT[200]: " + mixSignalFFT[200]);
 
-        fp = Algorithm.maxIndexInRangeJni(mixSignalFFT, 200, 1200);
-        Log.d(TAG,"mixSignalFFT[fp] = " + mixSignalFFT[fp]);
-        Log.d(TAG,"mixSignalFFT[200] = " + mixSignalFFT[200]);
-        fList.add(fp);
+        fp = Algorithm.maxIndexInRangeJni(mixSignalFFT, 600, 1200);
+        //Log.d(TAG,"mixSignalFFT[fp] = " + mixSignalFFT[fp]);
+        //Log.d(TAG,"mixSignalFFT[200] = " + mixSignalFFT[200]);
+
+        /*fList.add(fp);
         if (fList.size() == 300){
             Message msg = Message.obtain();
             msg.what = 2;
             msg.obj = calAverage(fList);
             mHandler.sendMessage(msg);
-        }
+        }*/
 
         double distance = 17.216 * 20.075 * fp / 2000000;
         Log.d(TAG, "mic distance : " + distance);
@@ -218,16 +246,21 @@ public class CalculateThread extends Thread implements BorderVar,AudioRecorder.R
 
     public void synchronizeSignalWithJni(double[] s1,double[] s2){
         //对信号进行分段
-        int segLen = Chirp.length * 3;
-        double[] left = new double[segLen];
-        double[] right = new double[segLen];
-        System.arraycopy(s1,segLen,left,0,segLen);
-        System.arraycopy(s2,segLen,right,0,segLen);
-        int n = segLen + Chirp.length;
+        int segLen = Chirp.length * 4;//480 * 4 = 1920
+        Log.e(TAG,"seg len###############:" + segLen);
+        double[] left = new double[segLen];//left length: 1920
+        double[] right = new double[segLen];//right length: 1920
+
+        System.arraycopy(s1,segLen,left,0,segLen);// leftNorm length:4096  leftNormalized(0,1920) -> left
+        System.arraycopy(s2,segLen,right,0,segLen);// leftNorm length:4096  rightNormalized(0,1920) -> right
+        int n = segLen + Chirp.length; // 5 * 480 = 2400;
+
+        //TODO avoid noise affect in correlationJni
         int startIndex = Algorithm.correlationJni(n,Chirp,left);
 
-        System.arraycopy(left, startIndex, leftSegment, 0, leftSegment.length);
-        System.arraycopy(right, startIndex, rightSegment, 0, rightSegment.length);
+        //Object src,  int  srcPos,Object dest, int destPos, int length
+        System.arraycopy(left, startIndex, leftSegment, 0, leftSegment.length);//leftSegment length:480  left(startIndex,startIndex+480) -> leftSegment
+        System.arraycopy(right, startIndex, rightSegment, 0, rightSegment.length);//rightSegment length:480  right(startIndex,startIndex+480) -> rightSegment
     }
     public void synchronusSignal(double[] s1, double[] s2) {
         //对信号进行分段
@@ -301,8 +334,10 @@ public class CalculateThread extends Thread implements BorderVar,AudioRecorder.R
     }
 
 
-
-    public synchronized double[] graphData() {
+    /*
+    *  测温频谱数据
+    * */
+    public double[] graphData() {
 
         //double[] ff = mSpectrum.getFreqResponse();
         //double[] ff = mixSignalFFT;
@@ -314,10 +349,33 @@ public class CalculateThread extends Thread implements BorderVar,AudioRecorder.R
 
     }
 
+    /*
+    *  测温峰值数据
+    * */
     public double[] fpGraphData() {
         System.arraycopy(fpData, 1, fpData, 0, fpData.length - 1);//新的fpdata取上一次的fpdata的第2个到最后一个数
         fpData[fpData.length - 1] = fp;//把最新获得的fp加到fpdata的最后一位
         return fpData;
+    }
+
+    //同步截取到的信号的频谱
+    public synchronized double[] spectData() {
+
+        double[] data = new double[512];
+        System.arraycopy(mixSignalFFT,0,data,0,data.length);
+        return data;
+        //return Arrays.copyOfRange(mixSignalFFT, 0, 1200);
+
+    }
+
+    // 时频图数据
+    public synchronized double[] timeSpecData() {
+
+        double[] data = new double[512];
+        System.arraycopy(mixSignalFFT,0,data,0,data.length);
+        return data;
+        //return Arrays.copyOfRange(mixSignalFFT, 0, 1200);
+
     }
 
 
@@ -337,12 +395,25 @@ public class CalculateThread extends Thread implements BorderVar,AudioRecorder.R
     }
 
 
-
+    /*
+    *  测温回调接口
+    * */
     public interface GraphDataCallBack{
         void onGraphDataReady(double[] graphData, double[] fpGraphData);
     }
 
     public void registerGraphDataCallback(GraphDataCallBack callBack){
         this.mGraphDataCallBack = callBack;
+    }
+
+    /*
+    *  训练回调接口
+    * */
+    public interface TrainingGraphDataCallBack{
+        void onTrainingGraphDataReady(double[] specData, double[] timeFreData);
+    }
+
+    public void registerTrainingGraphDataCallback(TrainingGraphDataCallBack callBack){
+        this.mTrainingGraphDataCallBack = callBack;
     }
 }

@@ -1,12 +1,16 @@
 package com.example.yy.thermometerwithc.Activity;
 
 import android.content.Intent;
+import android.support.v4.app.Fragment;
+import android.support.v4.app.FragmentManager;
+import android.support.v4.app.FragmentTransaction;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 
+import com.example.yy.thermometerwithc.Algorithm;
 import com.example.yy.thermometerwithc.R;
 
 public class MainActivity extends AppCompatActivity {
@@ -14,6 +18,7 @@ public class MainActivity extends AppCompatActivity {
 
     private Button configParamButton;
     private Button mixFreButton;
+
 
 
     private static final String TAG = "MainActivity";
@@ -26,8 +31,12 @@ public class MainActivity extends AppCompatActivity {
 
         configParamButton = findViewById(R.id.config_param_button);
         configParamButton.setOnClickListener(clickListener);
+
+        //trainingButton.setOnClickListener(clickListener);
         //mixFreButton = (Button)findViewById(R.id.solution_mixfre);
         //mixFreButton.setOnClickListener(clickListener);
+
+
     }
 
     /**

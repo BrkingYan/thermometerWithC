@@ -47,6 +47,14 @@ JNIEXPORT jint JNICALL Java_com_example_yy_thermometerwithc_Algorithm_maxIndexIn
 JNIEXPORT jdoubleArray JNICALL Java_com_example_yy_thermometerwithc_Algorithm_firHelperJni
   (JNIEnv *, jclass, jdoubleArray, jdoubleArray, jshortArray);
 
+/*
+ * Class:     com_example_yy_thermometerwithc_Algorithm
+ * Method:    normolizeArray
+ * Signature: ([S)[D
+ */
+JNIEXPORT jdoubleArray JNICALL Java_com_example_yy_thermometerwithc_Algorithm_normolizeArray
+  (JNIEnv *, jclass, jshortArray);
+
 #ifdef __cplusplus
 }
 #endif

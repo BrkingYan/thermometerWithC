@@ -3,4 +3,7 @@
     <string name="config_params">设置实验参数</string>
     <string name="solution_mixfre">开始测温</string>
 
+    <!-- TODO: Remove or change this placeholder text -->
+    <string name="hello_blank_fragment">Hello blank fragment</string>
+
 </resources>

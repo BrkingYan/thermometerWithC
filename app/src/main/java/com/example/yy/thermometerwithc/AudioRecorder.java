@@ -105,6 +105,7 @@ public class AudioRecorder implements IAudioRecorder{
 
                         if (bytesRead > 0) {
                             /********************* 回调音频数据 *************************/
+                            Log.d(TAG,"bufferSize:" + recordBuffer.length);
                             recordingCallback.onDataReady(recordBuffer,bytesRead);
                         } else {
                             Log.e(AudioRecorder.class.getSimpleName(), "error: " + bytesRead);

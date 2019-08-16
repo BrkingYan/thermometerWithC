@@ -17,6 +17,7 @@ import com.example.yy.thermometerwithc.AudioPlayer;
 import com.example.yy.thermometerwithc.AudioRecorder;
 import com.example.yy.thermometerwithc.BorderVar;
 import com.example.yy.thermometerwithc.CalculateThread;
+import com.example.yy.thermometerwithc.ChirpSignal;
 import com.example.yy.thermometerwithc.R;
 import com.jjoe64.graphview.GraphView;
 import com.jjoe64.graphview.series.DataPoint;
@@ -68,10 +69,12 @@ public class MeasureActivity extends AppCompatActivity implements CalculateThrea
                     }else {
                         mTemperature = (int)((double)msg.obj * 10);
                     }
-                    //mTemperatureResult.setText("" + mTemperature/10);
-                    mTemperatureResult.setText("" + (globalCount++));
+                    mTemperatureResult.setText("" + mTemperature/10);
+                    //mTemperatureResult.setText("" + (globalCount++));
                     //updateView(mCalculateThread.graphData());
-                    updateFpView(mCalculateThread.fpGraphData());
+                    updateView(graphData);
+                    //updateFpView(mCalculateThread.fpGraphData());
+                    updateFpView(fpGraphData);
                     break;
                 case 2:
                     int f = (int)msg.obj;
@@ -114,6 +117,10 @@ public class MeasureActivity extends AppCompatActivity implements CalculateThrea
             @Override
             public void onClick(View v) {
 
+                if (mRecorder != null || mPlayer != null){
+                    Toast.makeText(MeasureActivity.this,"recorder or player is busy now",Toast.LENGTH_SHORT).show();
+                    return;
+                }
                 initCalculateThread();
                 mCalculateThread.start();
 
@@ -126,19 +133,31 @@ public class MeasureActivity extends AppCompatActivity implements CalculateThrea
 
                 mPlayer = new AudioPlayer(MeasureActivity.this,mRecorder);
                 mPlayer.initAudioTrack();
-                mPlayer.playWavFile();
+                //mPlayer.playWavFile();
+                mPlayer.playChirpData();
             }
         });
 
         stopBtn.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                /*mRecorder.finishRecord();
-                mPlayer.stopPlay();*/
+                /*if (mRecorder != null){
+                    mRecorder.finishRecord();
+                }else {
+                    Toast.makeText(MeasureActivity.this,"record is not start",Toast.LENGTH_SHORT).show();
+                }
 
-                double[] arr = new double[]{3,4,5,1,2};
+                if (mPlayer != null){
+                    mPlayer.stopPlay();
+                }else {
+                    Toast.makeText(MeasureActivity.this,"player is not start",Toast.LENGTH_SHORT).show();
+                }*/
+
+
+                ChirpSignal.upChirpWithInterval(48000,2000,0.01);
+                /*double[] arr = new double[]{3,4,5,1,2};
                 int result = Algorithm.maxIndexInRangeJni(arr,0,3);
-                Log.d(TAG,result + "");
+                Log.d(TAG,result + "");*/
 
             }
         });
@@ -200,11 +219,8 @@ public class MeasureActivity extends AppCompatActivity implements CalculateThrea
     }
 
 
-    @Override
-    public void onGraphDataReady(double[] graphData,double[] fpGraphData) {
-        this.graphData = graphData;
-        this.fpGraphData = fpGraphData;
-    }
+
+
 
     /**
      * generate data for test
@@ -237,5 +253,15 @@ public class MeasureActivity extends AppCompatActivity implements CalculateThrea
         }
         android.os.Process.killProcess(android.os.Process.myPid());
     }
+
+    /*
+    *  测温数据回调
+    * */
+    @Override
+    public void onGraphDataReady(double[] graphData,double[] fpGraphData) {
+        this.graphData = graphData;
+        this.fpGraphData = fpGraphData;
+    }
+
 
 }

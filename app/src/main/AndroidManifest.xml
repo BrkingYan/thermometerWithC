@@ -21,6 +21,7 @@
         </activity>
         <activity android:name=".Activity.MeasureActivity"></activity>
         <activity android:name=".Activity.ParamConfigActivity"></activity>
+        <activity android:name=".Activity.TrainingActivity"></activity>
     </application>
 
 </manifest>

@@ -1,7 +1,8 @@
 #include "jni.h"
 #include <math.h>
 #include <stdio.h>
-
+#include <string.h>
+#include <stdlib.h>
 
 #ifndef _Included_com_example_yy_thermometerwithc_Algorithm
 #define _Included_com_example_yy_thermometerwithc_Algorithm
@@ -1155,6 +1156,40 @@ double b1[51] = {-0.05853948702347337, 0.098757610846725713,
 
 
 /*
+ *  topK  function for correlationJni
+*/
+void topk(int data[], int low, int high,int k) {
+    int start = low;
+    int end = high;
+    int mid = data[low];
+    /*int *dataCopy = (int*)malloc(sizeof(int)*18);
+    memcpy(dataCopy,data,sizeof(int)*18);*/
+    while (low < high) {
+        while (low < high && data[high] <= mid) {
+            high--;
+        }
+        if (low < high) {
+            data[low] = data[high];
+            low++;
+        }
+        while (low < high && data[low] >= mid) {
+            low++;
+        }
+        if (low < high) {
+            data[high] = data[low];
+            high--;
+        }
+    }
+    data[low] = mid;
+    if(low>k){
+        topk(data,start,low-1,k);
+    }else if(low<k){
+        topk(data,low+1,end,k);
+    }
+}
+
+
+/*
  * Class:     com_example_yy_thermometerwithc_Algorithm
  * Method:    correlationJni
  * Signature: (I[D[D)I
@@ -1222,9 +1257,10 @@ JNIEXPORT jint JNICALL Java_com_example_yy_thermometerwithc_Algorithm_correlatio
         			maxIndex = i;
         		}
         	}
-
-        	int startIndex = maxIndex;
-        	if(startIndex > segLen)
+            //topk(corP,0,corrLen-1,5);
+        	int startIndex = maxIndex - chirpLen;
+        	// n = 5 * chirp  segLen = 4 * chirp
+        	/*if(startIndex > segLen)
         	{
         		startIndex = startIndex - segLen;
         		if(startIndex > segLen - chirpLen)
@@ -1239,7 +1275,7 @@ JNIEXPORT jint JNICALL Java_com_example_yy_thermometerwithc_Algorithm_correlatio
         			startIndex = startIndex - chirpLen;
         		}
         	}
-
+            */
             env->ReleaseDoubleArrayElements(chirp,chirpP,0);
             env->ReleaseDoubleArrayElements(left,leftP,0);
             env->ReleaseDoubleArrayElements(corArray,corP,0);
@@ -1409,6 +1445,52 @@ JNIEXPORT jdoubleArray JNICALL Java_com_example_yy_thermometerwithc_Algorithm_fi
         	env->ReleaseDoubleArrayElements(out,outP,0);
         	return out;
   }
+
+    /*
+    * 归一化函数
+    */
+    double* normalize(short* arr,int length){
+        int len  = length;
+        short *arrCopy = (short*)malloc(sizeof(short)*len);
+        memcpy(arrCopy,arr,sizeof(short)*len);
+
+        for (int i = 0; i < len; ++i) {
+            if (arrCopy[i] < 0){
+                arrCopy[i] = - arrCopy[i];
+            }
+        }
+
+        short max = 0;
+        for (int j = 0; j < len; ++j) {
+            if (arrCopy[j] > max){
+                max = arrCopy[j];
+            }
+        }
+        double *result =  (double*)malloc(sizeof(double)*len);
+        for (int k = 0; k < len; ++k) {
+            result[k] = (double)arr[k] / max;
+        }
+        return result;
+    }
+    /*
+     * Class:     com_example_yy_thermometerwithc_Algorithm
+     * Method:    normolizeArray
+     * Signature: ([S)[D
+     */
+    JNIEXPORT jdoubleArray JNICALL Java_com_example_yy_thermometerwithc_Algorithm_normolizeArrayJni
+      (JNIEnv *env, jclass clazz, jshortArray arr)
+      {
+            jshort* arrP = env->GetShortArrayElements(arr,0);
+            int len = env->GetArrayLength(arr);
+            jdoubleArray result = env->NewDoubleArray(len);
+            jdouble* resultP = normalize(arrP,len);
+
+            env->ReleaseDoubleArrayElements(result,resultP,0);
+            env->ReleaseShortArrayElements(arr,arrP,0);
+
+            return result;
+
+      }
 
 #ifdef __cplusplus
 }

@@ -23,4 +23,6 @@ public class Algorithm {
 
     public native static double[] firHelperJni(double[] in,double[] outData,short[] signal);
 
+    public native static double[] normolizeArrayJni(short[] arr);
+
 }
